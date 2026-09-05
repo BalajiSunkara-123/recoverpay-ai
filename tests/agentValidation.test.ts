@@ -459,14 +459,14 @@ describe('Phase 3: Agent Decision + Policy Engine Integration', () => {
     assert.equal(result.finalAction, 'ESCALATE');
   });
 
-  test('29. Runtime model resolver returns sensible default gemini-2.5-flash when unset', () => {
+  test('29. Runtime model resolver returns sensible default gemini-3.8-flash when unset', () => {
     const saved = process.env.GEMINI_MODEL;
     delete process.env.GEMINI_MODEL;
     try {
       const model = resolveGeminiModel();
-      assert.equal(model, 'gemini-2.5-flash');
-      assert.equal(SUPPORTED_GEMINI_MODEL, 'gemini-2.5-flash');
-      assert.equal(geminiRecoveryAgent.getModel(), 'gemini-2.5-flash');
+      assert.equal(model, 'gemini-3.8-flash');
+      assert.equal(SUPPORTED_GEMINI_MODEL, 'gemini-3.8-flash');
+      assert.equal(geminiRecoveryAgent.getModel(), 'gemini-3.8-flash');
     } finally {
       if (saved !== undefined) process.env.GEMINI_MODEL = saved;
     }
@@ -475,10 +475,9 @@ describe('Phase 3: Agent Decision + Policy Engine Integration', () => {
   test('30. Runtime model resolver dynamically respects custom GEMINI_MODEL configuration', () => {
     const saved = process.env.GEMINI_MODEL;
     const testModels = [
-      'gemini-2.5-pro',
-      'gemini-2.0-flash',
-      'gemini-1.5-flash',
-      'gemini-2.5-flash'
+      'gemini-3.1-pro-preview',
+      'gemini-3.8-flash',
+      'gemini-flash-latest'
     ];
     try {
       for (const m of testModels) {
@@ -495,9 +494,9 @@ describe('Phase 3: Agent Decision + Policy Engine Integration', () => {
     delete process.env.GEMINI_MODEL;
     try {
       const agent = new GeminiRecoveryAgent();
-      assert.equal(agent.getModel(), 'gemini-2.5-flash');
-      process.env.GEMINI_MODEL = 'gemini-2.5-pro';
-      assert.equal(agent.getModel(), 'gemini-2.5-pro');
+      assert.equal(agent.getModel(), 'gemini-3.8-flash');
+      process.env.GEMINI_MODEL = 'gemini-3.1-pro-preview';
+      assert.equal(agent.getModel(), 'gemini-3.1-pro-preview');
     } finally {
       if (saved !== undefined) process.env.GEMINI_MODEL = saved;
     }

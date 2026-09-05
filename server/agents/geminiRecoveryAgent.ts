@@ -91,7 +91,7 @@ const DECISION_SCHEMA = {
   ]
 };
 
-export const DEFAULT_GEMINI_MODEL = 'gemini-2.5-flash';
+export const DEFAULT_GEMINI_MODEL = 'gemini-3.8-flash';
 export const SUPPORTED_GEMINI_MODEL = DEFAULT_GEMINI_MODEL;
 
 export function resolveGeminiModel(): string {

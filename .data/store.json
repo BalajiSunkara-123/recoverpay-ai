@@ -19830,10 +19830,10 @@
       "execution_mode": "SIMULATED_RECOVERY",
       "amount_recovered": 0,
       "final_payment_status": "captured",
-      "event_id": "evt_1788604725397_yqykyxj",
-      "timestamp": "2026-09-05T10:38:45.397Z",
+      "event_id": "evt_1788605264819_5h72kah",
+      "timestamp": "2026-09-05T10:47:44.819Z",
       "previous_hash": "0000000000000000000000000000000000000000000000000000000000000000",
-      "current_hash": "db7f805abc80e2bfa1c1c7a035dcbffdeb48bf61322104da79ac03bd0a5b5d8d"
+      "current_hash": "25ce8b65378aa75305a9d0535ca4cdb6663f4fb54ce40454ddf242fecf723332"
     },
     {
       "payment_id": "pay_demo_captured_05",
@@ -19844,10 +19844,10 @@
       "tool_result": "SKIPPED",
       "amount_recovered": 0,
       "final_payment_status": "captured",
-      "event_id": "evt_1788604725404_umhyk0h",
-      "timestamp": "2026-09-05T10:38:45.404Z",
-      "previous_hash": "db7f805abc80e2bfa1c1c7a035dcbffdeb48bf61322104da79ac03bd0a5b5d8d",
-      "current_hash": "1a7253c8d06147061d1ff26b0cb9e1ccac20453b38fe43fb4fc7e33225846c21"
+      "event_id": "evt_1788605264827_1kfbty8",
+      "timestamp": "2026-09-05T10:47:44.827Z",
+      "previous_hash": "25ce8b65378aa75305a9d0535ca4cdb6663f4fb54ce40454ddf242fecf723332",
+      "current_hash": "ca029654f322c9cf8a1f7631cb8af4f7fae0e2c55487652fb0082a300c6ea2c4"
     }
   ],
   "stats": {
@@ -19869,6 +19869,6 @@
     "total_failure_amount": 611565400,
     "ground_truth_recoverable_count": 487,
     "ground_truth_recoverable_amount": 489287300,
-    "generated_at": "2026-09-05T10:38:45.391Z"
+    "generated_at": "2026-09-05T10:47:44.813Z"
   }
 }
