@@ -81,7 +81,52 @@ class DataStore {
     this.initialized = true;
     return freshState;
   }
+  public createTestTransaction(): Payment {
+  const now = new Date();
+  const customerId = `cust_test_${Date.now()}`;
+  const paymentId = `pay_test_${Date.now()}`;
 
+  const customer: Customer = {
+    id: customerId,
+    name: 'RecoverPay Test Customer',
+    email: `test-${Date.now()}@recoverpay.demo`,
+    contact: '+919999999999',
+    lifetime_value: 500000,
+    previous_success_count: 5,
+    previous_failure_count: 0,
+    historical_success_rate: 1.0,
+    opted_out: false,
+    created_at: now.toISOString()
+  };
+
+  const payment: Payment = {
+    id: paymentId,
+    customer_id: customerId,
+    order_id: `order_${paymentId}`,
+    amount: 249900,
+    currency: 'INR',
+    status: 'failed',
+    failure_category: 'TRANSIENT_BANK_FAILURE',
+    failure_code: 'BANK_SYSTEM_BUSY',
+    failure_reason: 'Test transaction — simulated transient bank failure',
+    attempt_count: 1,
+    recovery_attempts: 0,
+    seconds_since_failure: 1200,
+    last_attempt_at: new Date(now.getTime() - 1200 * 1000).toISOString(),
+    created_at: now.toISOString(),
+    updated_at: now.toISOString(),
+    ground_truth_recoverable: true,
+    ground_truth_best_action: 'RETRY_PAYMENT',
+    ground_truth_expected_outcome: 'RECOVERED',
+    ground_truth_reason: 'Fresh test transaction created for Razorpay sandbox recovery.'
+  };
+
+  this.state.customers.push(customer);
+  this.state.payments.push(payment);
+  this.saveToDisk(this.state);
+
+  return payment;
+}
   private saveToDisk(state: DatabaseState): void {
     try {
       if (!fs.existsSync(DATA_DIR)) {

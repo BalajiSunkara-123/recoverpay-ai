@@ -55,14 +55,29 @@ razorpayRouter.get('/status', (_req: Request, res: Response) => {
  * Preserves the full Zero-Trust architecture:
  * Payment Telemetry -> Policy Gate -> Bounded Tool Router -> Razorpay Test API -> Outcome Verification.
  */
-razorpayRouter.post('/test-demo', async (req: Request, res: Response): Promise<void> => {
-  // const { paymentId = 'pay_demo_transient_01', action = 'SEND_PAYMENT_REMINDER' } = req.body;
-  const {
-    paymentId = `pay_test_${Date.now()}`,
-    action = 'SEND_PAYMENT_REMINDER'
-  } = req.body;
+// razorpayRouter.post('/test-demo', async (req: Request, res: Response): Promise<void> => {
+//   // const { paymentId = 'pay_demo_transient_01', action = 'SEND_PAYMENT_REMINDER' } = req.body;
+//   const {
+//     paymentId = `pay_test_${Date.now()}`,
+//     action = 'SEND_PAYMENT_REMINDER'
+//   } = req.body;
+//   const config = getRazorpayConfig();
+  const { action = 'SEND_PAYMENT_REMINDER' } = req.body;
   const config = getRazorpayConfig();
 
+  if (!config.isConfigured) {
+    res.status(400).json({
+      success: false,
+      error: 'RAZORPAY_CREDENTIALS_MISSING',
+      message: 'Razorpay TEST keys are not configured.',
+      fallback_to_simulation: true
+    });
+    return;
+  }
+
+  // Create a completely fresh failed transaction for every demo run.
+  const freshPayment = dataStore.createTestTransaction();
+  const paymentId = freshPayment.id;
   // 1. If credentials missing, fail closed gracefully with safe fallback notice
   if (!config.isConfigured) {
     res.status(400).json({
@@ -78,15 +93,15 @@ razorpayRouter.post('/test-demo', async (req: Request, res: Response): Promise<v
   // if (paymentId.startsWith('pay_demo_')) {
   //   dataStore.resetDemoScenario(paymentId);
   // }
-  if (paymentId.startsWith("pay_demo_")) {
-    dataStore.resetDemoScenario(paymentId);
+  // if (paymentId.startsWith("pay_demo_")) {
+  //   dataStore.resetDemoScenario(paymentId);
 
-    console.log(
-      '[Razorpay Demo] After reset:',
-      dataStore.getPaymentById(paymentId)?.status,
-      dataStore.getPaymentById(paymentId)?.recovery_attempts
-    );
-  }
+  //   console.log(
+  //     '[Razorpay Demo] After reset:',
+  //     dataStore.getPaymentById(paymentId)?.status,
+  //     dataStore.getPaymentById(paymentId)?.recovery_attempts
+  //   );
+  // }
 
   // 2. Fetch fresh payment and customer from DataStore
   const payment = dataStore.getPaymentById(paymentId);
