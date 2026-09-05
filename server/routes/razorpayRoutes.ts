@@ -56,7 +56,11 @@ razorpayRouter.get('/status', (_req: Request, res: Response) => {
  * Payment Telemetry -> Policy Gate -> Bounded Tool Router -> Razorpay Test API -> Outcome Verification.
  */
 razorpayRouter.post('/test-demo', async (req: Request, res: Response): Promise<void> => {
-  const { paymentId = 'pay_demo_transient_01', action = 'SEND_PAYMENT_REMINDER' } = req.body;
+  // const { paymentId = 'pay_demo_transient_01', action = 'SEND_PAYMENT_REMINDER' } = req.body;
+  const {
+    paymentId = `pay_test_${Date.now()}`,
+    action = 'SEND_PAYMENT_REMINDER'
+  } = req.body;
   const config = getRazorpayConfig();
 
   // 1. If credentials missing, fail closed gracefully with safe fallback notice
