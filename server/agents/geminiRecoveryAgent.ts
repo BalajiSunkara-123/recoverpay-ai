@@ -91,22 +91,15 @@ const DECISION_SCHEMA = {
   ]
 };
 
-export const SUPPORTED_GEMINI_MODEL = 'gemini-3.8-flash';
+export const DEFAULT_GEMINI_MODEL = 'gemini-2.5-flash';
+export const SUPPORTED_GEMINI_MODEL = DEFAULT_GEMINI_MODEL;
 
 export function resolveGeminiModel(): string {
   const envModel = (process.env.GEMINI_MODEL || '').trim();
-  // Enforce supported gemini-3.8-flash if env var is missing or set to a deprecated/incompatible model (e.g. gemini-2.5-flash, 2.0, 1.5, pro)
-  if (
-    !envModel ||
-    envModel.includes('2.5') ||
-    envModel.includes('2.0') ||
-    envModel.includes('1.5') ||
-    envModel.includes('pro') ||
-    envModel !== SUPPORTED_GEMINI_MODEL
-  ) {
-    return SUPPORTED_GEMINI_MODEL;
+  if (envModel) {
+    return envModel;
   }
-  return SUPPORTED_GEMINI_MODEL;
+  return DEFAULT_GEMINI_MODEL;
 }
 
 export class GeminiRecoveryAgent implements RecoveryAgentService {

@@ -16,13 +16,11 @@ import { evaluationRouter } from './routes/evaluationRoutes.ts';
 import { auditRouter } from './routes/auditRoutes.ts';
 import { razorpayRouter } from './routes/razorpayRoutes.ts';
 import { AIAgentDecision } from '../src/types/index.ts';
+import { resolveGeminiModel } from './agents/geminiRecoveryAgent.ts';
 
-// Ensure supported gemini-3.8-flash model is active across environment
-if (
-  !process.env.GEMINI_MODEL ||
-  process.env.GEMINI_MODEL !== 'gemini-3.8-flash'
-) {
-  process.env.GEMINI_MODEL = 'gemini-3.8-flash';
+// Configurable Gemini model identifier: respect environment variable if set, otherwise fallback to sensible default
+if (!process.env.GEMINI_MODEL || process.env.GEMINI_MODEL.trim() === '') {
+  process.env.GEMINI_MODEL = resolveGeminiModel();
 }
 
 export const app = express();

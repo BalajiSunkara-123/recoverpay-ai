@@ -459,41 +459,48 @@ describe('Phase 3: Agent Decision + Policy Engine Integration', () => {
     assert.equal(result.finalAction, 'ESCALATE');
   });
 
-  test('29. Runtime model resolver strictly returns gemini-3.8-flash by default', () => {
+  test('29. Runtime model resolver returns sensible default gemini-2.5-flash when unset', () => {
     const saved = process.env.GEMINI_MODEL;
     delete process.env.GEMINI_MODEL;
     try {
       const model = resolveGeminiModel();
-      assert.equal(model, 'gemini-3.8-flash');
-      assert.equal(SUPPORTED_GEMINI_MODEL, 'gemini-3.8-flash');
-      assert.equal(geminiRecoveryAgent.getModel(), 'gemini-3.8-flash');
+      assert.equal(model, 'gemini-2.5-flash');
+      assert.equal(SUPPORTED_GEMINI_MODEL, 'gemini-2.5-flash');
+      assert.equal(geminiRecoveryAgent.getModel(), 'gemini-2.5-flash');
     } finally {
       if (saved !== undefined) process.env.GEMINI_MODEL = saved;
     }
   });
 
-  test('30. Runtime model resolver overrides deprecated models (gemini-2.5-flash, 2.0, 1.5, pro) to gemini-3.8-flash', () => {
+  test('30. Runtime model resolver dynamically respects custom GEMINI_MODEL configuration', () => {
     const saved = process.env.GEMINI_MODEL;
-    const deprecatedModels = [
-      'gemini-2.5-flash',
-      'gemini-2.0-flash-exp',
+    const testModels = [
+      'gemini-2.5-pro',
+      'gemini-2.0-flash',
       'gemini-1.5-flash',
-      'gemini-pro',
-      'unknown-legacy-model'
+      'gemini-2.5-flash'
     ];
     try {
-      for (const dep of deprecatedModels) {
-        process.env.GEMINI_MODEL = dep;
-        assert.equal(resolveGeminiModel(), 'gemini-3.8-flash', `Expected override for ${dep}`);
+      for (const m of testModels) {
+        process.env.GEMINI_MODEL = m;
+        assert.equal(resolveGeminiModel(), m, `Expected configured model ${m}`);
       }
     } finally {
       if (saved !== undefined) process.env.GEMINI_MODEL = saved;
     }
   });
 
-  test('31. GeminiRecoveryAgent instance reports active model as gemini-3.8-flash', () => {
-    const agent = new GeminiRecoveryAgent();
-    assert.equal(agent.getModel(), 'gemini-3.8-flash');
+  test('31. GeminiRecoveryAgent instance reports active configured model or default', () => {
+    const saved = process.env.GEMINI_MODEL;
+    delete process.env.GEMINI_MODEL;
+    try {
+      const agent = new GeminiRecoveryAgent();
+      assert.equal(agent.getModel(), 'gemini-2.5-flash');
+      process.env.GEMINI_MODEL = 'gemini-2.5-pro';
+      assert.equal(agent.getModel(), 'gemini-2.5-pro');
+    } finally {
+      if (saved !== undefined) process.env.GEMINI_MODEL = saved;
+    }
   });
 
   test('32. Missing or dummy API key triggers fail-closed ESCALATE fallback with confidence 0', async () => {

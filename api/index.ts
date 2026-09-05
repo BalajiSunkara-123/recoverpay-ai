@@ -5,4 +5,5 @@
 
 import { app } from '../server/app.ts';
 
+export { app };
 export default app;
