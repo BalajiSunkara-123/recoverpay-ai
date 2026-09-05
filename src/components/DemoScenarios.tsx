@@ -10,13 +10,13 @@
  */
 
 import React, { useState } from 'react';
-import { Play, Loader2, AlertCircle, CheckCircle2, ShieldAlert, AlertTriangle, Bug, Lock, Zap } from 'lucide-react';
+import { Play, Loader2, AlertCircle, CheckCircle2, ShieldAlert, AlertTriangle, Bug, Lock, Zap, Cpu } from 'lucide-react';
 import { runDemoScenario, DemoTraceResponse } from '../lib/api.ts';
 
 interface DemoScenariosProps {
   onScenarioExecuted: (trace: DemoTraceResponse) => void;
   onRefreshNeeded: () => void;
-  onOpenJudgeDemo?: (mode: 'recovery' | 'safety') => void;
+  onOpenJudgeDemo?: (mode: 'recovery' | 'safety' | 'razorpay_test') => void;
 }
 
 export const DemoScenarios: React.FC<DemoScenariosProps> = ({
@@ -167,6 +167,13 @@ export const DemoScenarios: React.FC<DemoScenariosProps> = ({
             >
               <ShieldAlert className="w-3.5 h-3.5 text-fuchsia-400" />
               <span>SAFETY BLOCK (C)</span>
+            </button>
+            <button
+              onClick={() => onOpenJudgeDemo('razorpay_test')}
+              className="px-2.5 py-1 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 text-white font-bold rounded text-[11px] transition-colors flex items-center gap-1.5 cursor-pointer font-mono"
+            >
+              <Cpu className="w-3.5 h-3.5" />
+              <span>RAZORPAY TEST (MODE 2)</span>
             </button>
           </div>
         </div>

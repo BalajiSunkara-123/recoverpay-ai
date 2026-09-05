@@ -21,12 +21,16 @@ import {
   Activity,
   CheckCircle2,
   AlertTriangle,
-  FileText
+  FileText,
+  Cpu,
+  Lock
 } from 'lucide-react';
 import {
   fetchDashboardMetrics,
   fetchPayments,
   resetDataset,
+  fetchRazorpayStatus,
+  RazorpayStatusResponse,
   DashboardMetrics,
   RecoveryFunnelData,
   PaymentListItem,
@@ -62,9 +66,10 @@ export default function App() {
 
   // Judge Demo Presentation Walkthrough State
   const [judgeDemoOpen, setJudgeDemoOpen] = useState<boolean>(false);
-  const [judgeDemoMode, setJudgeDemoMode] = useState<'recovery' | 'safety' | 'duplicate'>('recovery');
+  const [judgeDemoMode, setJudgeDemoMode] = useState<'recovery' | 'safety' | 'duplicate' | 'razorpay_test'>('recovery');
+  const [razorpayStatus, setRazorpayStatus] = useState<RazorpayStatusResponse | null>(null);
 
-  const handleOpenJudgeDemo = (mode: 'recovery' | 'safety' = 'recovery') => {
+  const handleOpenJudgeDemo = (mode: 'recovery' | 'safety' | 'duplicate' | 'razorpay_test' = 'recovery') => {
     setJudgeDemoMode(mode);
     setJudgeDemoOpen(true);
   };
@@ -170,9 +175,16 @@ export default function App() {
     loadPayments();
   }, [loadPayments]);
 
+  useEffect(() => {
+    fetchRazorpayStatus()
+      .then(setRazorpayStatus)
+      .catch(err => console.warn('Razorpay status fetch:', err));
+  }, []);
+
   const handleRefreshAll = () => {
     loadMetrics();
     loadPayments();
+    fetchRazorpayStatus().then(setRazorpayStatus).catch(() => {});
   };
 
   const handleResetDataset = async () => {
@@ -333,44 +345,65 @@ export default function App() {
 
       {/* Main Container */}
       <main className="flex-1 max-w-7xl w-full mx-auto p-4 space-y-4">
-        {/* Judge Demo Banner: One-Click Presentation Launcher */}
-        {/*<div className="bg-gradient-to-r from-[#0c1322] via-[#101b33] to-[#150d24] border-2 border-cyan-500/60 rounded-lg p-3 sm:p-3.5 shadow-lg flex flex-col md:flex-row items-center justify-between gap-3 glitch-box-glow">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded bg-cyan-950/80 border border-cyan-400 flex items-center justify-center text-cyan-400 shrink-0">
+        {/* Judge Demo Banner: One-Click Presentation Launcher (Dual-Mode Architecture) */}
+        <div className="bg-gradient-to-r from-[#0c1322] via-[#101b33] to-[#150d24] border-2 border-cyan-500/60 rounded-lg p-3 sm:p-4 shadow-lg flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 glitch-box-glow">
+          <div className="flex items-start sm:items-center gap-3">
+            <div className="w-10 h-10 rounded bg-cyan-950/90 border border-cyan-400 flex items-center justify-center text-cyan-400 shrink-0 mt-0.5 sm:mt-0">
               <Zap className="w-5 h-5 fill-cyan-400" />
             </div>
             <div>
-              <div className="flex items-center gap-2">
-                <span className="font-mono text-sm font-bold tracking-wider text-cyan-400 glitch-cyan-magenta">
-                  JUDGE DEMO WORKFLOW // 3–5 MINUTE PRESENTATION
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="font-mono text-sm sm:text-base font-bold tracking-wider text-cyan-400 glitch-cyan-magenta">
+                  RECOVERPAY // JUDGE DEMONSTRATION WORKFLOW
                 </span>
-                <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-fuchsia-950/80 text-fuchsia-300 border border-fuchsia-500/60 font-semibold">
-                  DETERMINISTIC
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-cyan-950/80 text-cyan-300 border border-cyan-500/60 font-semibold">
+                  DUAL-MODE ARCHITECTURE
+                </span>
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-amber-950/80 text-amber-300 border border-amber-500/60 font-semibold">
+                  RAZORPAY TEST MODE — NO REAL MONEY
                 </span>
               </div>
-              <p className="text-xs text-slate-300 font-sans mt-0.5">
-                Walk the judging panel through the complete zero-trust recovery lifecycle: Telemetry → AI Diagnosis → Policy Gate → Tool Router → Outcome Verification → Cryptographic Ledger.
+              <p className="text-xs text-slate-300 font-sans mt-1">
+                Zero-trust recovery workflow: Telemetry → AI Diagnosis → Policy Gate → Bounded Router → Razorpay Test API / Simulation → Outcome Verification → SHA-256 Ledger.
               </p>
+              <div className="flex items-center gap-3 mt-1.5 text-[11px] font-mono text-slate-400">
+                <span className="flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                  <span>Mode 1: Synthetic Rail (600 Records)</span>
+                </span>
+                <span className="text-slate-600">|</span>
+                <span className="flex items-center gap-1">
+                  <Lock className="w-3 h-3 text-cyan-400" />
+                  <span>Mode 2: {razorpayStatus?.configured ? `Sandbox Active (${razorpayStatus.masked_key_id || 'rzp_test_••••'})` : 'Safe Simulation Fallback'}</span>
+                </span>
+              </div>
             </div>
           </div>
 
-          <div className="flex items-center gap-2 shrink-0 w-full md:w-auto">
+          <div className="flex flex-wrap items-center gap-2 shrink-0 w-full lg:w-auto">
             <button
               onClick={() => handleOpenJudgeDemo('recovery')}
-              className="flex-1 md:flex-none px-4 py-2 bg-cyan-500 hover:bg-cyan-400 text-black font-bold rounded text-xs transition-all shadow-lg shadow-cyan-500/30 flex items-center justify-center gap-2 cursor-pointer font-mono"
+              className="flex-1 sm:flex-none px-3.5 py-2 bg-cyan-500 hover:bg-cyan-400 text-black font-bold rounded text-xs transition-all shadow-lg shadow-cyan-500/30 flex items-center justify-center gap-1.5 cursor-pointer font-mono"
             >
-              <Zap className="w-4 h-4 fill-black" />
-              <span>RUN JUDGE DEMO</span>
+              <Zap className="w-3.5 h-3.5 fill-black" />
+              <span>RUN JUDGE DEMO (MODE 1)</span>
             </button>
             <button
               onClick={() => handleOpenJudgeDemo('safety')}
-              className="flex-1 md:flex-none px-3.5 py-2 bg-slate-900 hover:bg-fuchsia-950/80 text-fuchsia-300 border border-fuchsia-600/70 hover:border-fuchsia-500 rounded text-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer font-mono"
+              className="flex-1 sm:flex-none px-3 py-2 bg-slate-900 hover:bg-fuchsia-950/80 text-fuchsia-300 border border-fuchsia-600/70 hover:border-fuchsia-500 rounded text-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer font-mono"
             >
-              <ShieldAlert className="w-4 h-4 text-fuchsia-400" />
+              <ShieldAlert className="w-3.5 h-3.5 text-fuchsia-400" />
               <span>SAFETY BLOCK (₹85k)</span>
             </button>
+            <button
+              onClick={() => handleOpenJudgeDemo('razorpay_test')}
+              className="flex-1 sm:flex-none px-3.5 py-2 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 text-white font-bold rounded text-xs transition-all shadow-lg shadow-cyan-600/30 flex items-center justify-center gap-1.5 cursor-pointer font-mono"
+            >
+              <Cpu className="w-3.5 h-3.5" />
+              <span>RUN RAZORPAY TEST (MODE 2)</span>
+            </button>
           </div>
-        </div>*/}
+        </div>
 
         {/* 3. COMPACT KPI STRIP */}
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">

@@ -7,6 +7,7 @@
  * - NEVER implements silent card charging.
  * - Missing credentials gracefully fail closed with diagnostic report (zero crashes).
  * - "TEST API SUCCESS != PAYMENT RECOVERY" (payment link created != payment captured).
+ * - Outcome verification is mandatory: only a verified captured status authorizes recovered = true.
  */
 
 import { Payment, Customer, ToolResult, PaymentStatus } from '../../src/types/index.ts';
@@ -26,6 +27,67 @@ export function getRazorpayConfig(): RazorpayConfig {
     keyId,
     keySecret,
     isConfigured
+  };
+}
+
+export function getMaskedRazorpayConfig(): {
+  isConfigured: boolean;
+  maskedKeyId: string | null;
+  mode: 'RAZORPAY_TEST' | 'DEMO';
+  label: string;
+} {
+  const cfg = getRazorpayConfig();
+  if (!cfg.isConfigured || !cfg.keyId) {
+    return {
+      isConfigured: false,
+      maskedKeyId: null,
+      mode: 'DEMO',
+      label: 'SIMULATED DEMO (Razorpay Test Keys Not Configured)'
+    };
+  }
+
+  const masked = cfg.keyId.length > 12 
+    ? `${cfg.keyId.slice(0, 8)}••••${cfg.keyId.slice(-4)}`
+    : 'rzp_test_••••';
+
+  return {
+    isConfigured: true,
+    maskedKeyId: masked,
+    mode: 'RAZORPAY_TEST',
+    label: 'RAZORPAY TEST MODE — NO REAL MONEY'
+  };
+}
+
+export function parseRazorpayError(status: number, errorBody: string): { code: string; message: string } {
+  let parsedDesc = '';
+  try {
+    const json = JSON.parse(errorBody);
+    if (json.error?.description) parsedDesc = json.error.description;
+  } catch {
+    parsedDesc = errorBody.slice(0, 150);
+  }
+
+  if (status === 401 || status === 403) {
+    return {
+      code: 'RAZORPAY_AUTH_FAILED',
+      message: `Razorpay Test API authentication failed (${status}). Verify RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET. ${parsedDesc}`
+    };
+  }
+  if (status === 429) {
+    return {
+      code: 'RAZORPAY_RATE_LIMIT',
+      message: `Razorpay Test API rate limit exceeded (429). Automated requests throttled safely.`
+    };
+  }
+  if (status >= 500) {
+    return {
+      code: 'RAZORPAY_SERVER_ERROR',
+      message: `Razorpay internal gateway error (${status}). ${parsedDesc}`
+    };
+  }
+  return {
+    code: 'RAZORPAY_API_ERROR',
+    message: `Razorpay API returned HTTP ${status}: ${parsedDesc}`
   };
 }
 
@@ -87,11 +149,13 @@ export async function createRazorpayTestPaymentLink(
         'Authorization': authHeader,
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify(payload)
+      body: JSON.stringify(payload),
+      signal: AbortSignal.timeout(8000)
     });
 
     if (!response.ok) {
       const errorBody = await response.text();
+      const parsed = parseRazorpayError(response.status, errorBody);
       return {
         tool_called: 'send_payment_reminder',
         action: 'SEND_PAYMENT_REMINDER',
@@ -104,15 +168,15 @@ export async function createRazorpayTestPaymentLink(
         policy_decision: 'ALLOWED',
         policy_violations: [],
         final_payment_status: payment.status,
-        message: `Razorpay TEST API returned HTTP ${response.status}`,
-        error_message: errorBody,
+        message: parsed.message,
+        error_message: `[${parsed.code}] ${errorBody}`,
         timestamp
       };
     }
 
     const data = await response.json();
 
-    // CRITICAL: Payment link created != Payment captured.
+    // CRITICAL INVARIANT: Payment link created != Payment captured.
     // recovered is explicitly FALSE until customer completes payment.
     return {
       tool_called: 'send_payment_reminder',
@@ -128,10 +192,11 @@ export async function createRazorpayTestPaymentLink(
       external_reference_id: data.id, // e.g. plink_xxxx
       payment_link_url: data.short_url,
       final_payment_status: payment.status,
-      message: `Razorpay TEST Payment Link generated successfully (${data.id}). Awaiting customer payment.`,
+      message: `Razorpay TEST Payment Link generated successfully (${data.id}). Awaiting customer authorization.`,
       timestamp
     };
   } catch (err: any) {
+    const isTimeout = err.name === 'TimeoutError';
     return {
       tool_called: 'send_payment_reminder',
       action: 'SEND_PAYMENT_REMINDER',
@@ -144,8 +209,10 @@ export async function createRazorpayTestPaymentLink(
       policy_decision: 'ALLOWED',
       policy_violations: [],
       final_payment_status: payment.status,
-      message: `Razorpay TEST API network exception: ${err.message}`,
-      error_message: err.message,
+      message: isTimeout 
+        ? 'Razorpay TEST API network timeout (8000ms).' 
+        : `Razorpay TEST API network exception: ${err.message}`,
+      error_message: isTimeout ? 'RAZORPAY_NETWORK_TIMEOUT' : err.message,
       timestamp
     };
   }
@@ -199,11 +266,13 @@ export async function createRazorpayTestOrder(
         'Authorization': authHeader,
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify(payload)
+      body: JSON.stringify(payload),
+      signal: AbortSignal.timeout(8000)
     });
 
     if (!response.ok) {
       const errorBody = await response.text();
+      const parsed = parseRazorpayError(response.status, errorBody);
       return {
         tool_called: 'retry_payment',
         action: 'RETRY_PAYMENT',
@@ -216,8 +285,8 @@ export async function createRazorpayTestOrder(
         policy_decision: 'ALLOWED',
         policy_violations: [],
         final_payment_status: payment.status,
-        message: `Razorpay TEST API returned HTTP ${response.status}`,
-        error_message: errorBody,
+        message: parsed.message,
+        error_message: `[${parsed.code}] ${errorBody}`,
         timestamp
       };
     }
@@ -242,6 +311,7 @@ export async function createRazorpayTestOrder(
       timestamp
     };
   } catch (err: any) {
+    const isTimeout = err.name === 'TimeoutError';
     return {
       tool_called: 'retry_payment',
       action: 'RETRY_PAYMENT',
@@ -254,9 +324,84 @@ export async function createRazorpayTestOrder(
       policy_decision: 'ALLOWED',
       policy_violations: [],
       final_payment_status: payment.status,
-      message: `Razorpay TEST API network exception: ${err.message}`,
-      error_message: err.message,
+      message: isTimeout 
+        ? 'Razorpay TEST API network timeout (8000ms).' 
+        : `Razorpay TEST API network exception: ${err.message}`,
+      error_message: isTimeout ? 'RAZORPAY_NETWORK_TIMEOUT' : err.message,
       timestamp
+    };
+  }
+}
+
+export interface RazorpayLinkVerification {
+  success: boolean;
+  paid: boolean;
+  status: 'created' | 'partially_paid' | 'paid' | 'cancelled' | 'expired';
+  amount_paid?: number;
+  payment_id?: string;
+  raw?: any;
+  error?: string;
+  code?: string;
+}
+
+/**
+ * Checks live status of a Razorpay Payment Link (GET /v1/payment_links/:id)
+ */
+export async function verifyRazorpayTestPaymentLink(
+  paymentLinkId: string
+): Promise<RazorpayLinkVerification> {
+  const config = getRazorpayConfig();
+  if (!config.isConfigured || !config.keyId || !config.keySecret) {
+    return {
+      success: false,
+      paid: false,
+      status: 'created',
+      error: 'Razorpay TEST credentials not configured',
+      code: 'RAZORPAY_CREDENTIALS_MISSING'
+    };
+  }
+
+  const authHeader = `Basic ${Buffer.from(`${config.keyId}:${config.keySecret}`).toString('base64')}`;
+
+  try {
+    const response = await fetch(`https://api.razorpay.com/v1/payment_links/${paymentLinkId}`, {
+      method: 'GET',
+      headers: {
+        'Authorization': authHeader
+      },
+      signal: AbortSignal.timeout(8000)
+    });
+
+    if (!response.ok) {
+      const errorBody = await response.text();
+      const parsed = parseRazorpayError(response.status, errorBody);
+      return {
+        success: false,
+        paid: false,
+        status: 'created',
+        error: parsed.message,
+        code: parsed.code
+      };
+    }
+
+    const data = await response.json();
+    const isPaid = data.status === 'paid';
+    return {
+      success: true,
+      paid: isPaid,
+      status: data.status,
+      amount_paid: data.amount_paid || (isPaid ? data.amount : 0),
+      payment_id: data.payments && data.payments.length > 0 ? data.payments[0].payment_id : undefined,
+      raw: data
+    };
+  } catch (err: any) {
+    const isTimeout = err.name === 'TimeoutError';
+    return {
+      success: false,
+      paid: false,
+      status: 'created',
+      error: isTimeout ? 'Razorpay Test API request timed out (8000ms)' : err.message,
+      code: isTimeout ? 'RAZORPAY_NETWORK_TIMEOUT' : 'RAZORPAY_NETWORK_ERROR'
     };
   }
 }
@@ -266,10 +411,14 @@ export async function createRazorpayTestOrder(
  */
 export async function verifyRazorpayTestPayment(
   razorpayPaymentId: string
-): Promise<{ success: boolean; status?: PaymentStatus; raw?: any; error?: string }> {
+): Promise<{ success: boolean; status?: PaymentStatus; raw?: any; error?: string; code?: string }> {
   const config = getRazorpayConfig();
   if (!config.isConfigured || !config.keyId || !config.keySecret) {
-    return { success: false, error: 'Razorpay TEST credentials not configured' };
+    return { 
+      success: false, 
+      error: 'Razorpay TEST credentials not configured',
+      code: 'RAZORPAY_CREDENTIALS_MISSING'
+    };
   }
 
   const authHeader = `Basic ${Buffer.from(`${config.keyId}:${config.keySecret}`).toString('base64')}`;
@@ -279,11 +428,14 @@ export async function verifyRazorpayTestPayment(
       method: 'GET',
       headers: {
         'Authorization': authHeader
-      }
+      },
+      signal: AbortSignal.timeout(8000)
     });
 
     if (!response.ok) {
-      return { success: false, error: `Razorpay returned HTTP ${response.status}` };
+      const errorBody = await response.text();
+      const parsed = parseRazorpayError(response.status, errorBody);
+      return { success: false, error: parsed.message, code: parsed.code };
     }
 
     const data = await response.json();
@@ -294,6 +446,12 @@ export async function verifyRazorpayTestPayment(
 
     return { success: true, status, raw: data };
   } catch (err: any) {
-    return { success: false, error: err.message };
+    const isTimeout = err.name === 'TimeoutError';
+    return { 
+      success: false, 
+      error: isTimeout ? 'Razorpay Test API request timed out (8000ms)' : err.message,
+      code: isTimeout ? 'RAZORPAY_NETWORK_TIMEOUT' : 'RAZORPAY_NETWORK_ERROR'
+    };
   }
 }
+

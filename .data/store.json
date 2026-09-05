@@ -19830,10 +19830,10 @@
       "execution_mode": "SIMULATED_RECOVERY",
       "amount_recovered": 0,
       "final_payment_status": "captured",
-      "event_id": "evt_1788596054963_mhxlkum",
-      "timestamp": "2026-09-05T08:14:14.963Z",
+      "event_id": "evt_1788601296540_it7rnmt",
+      "timestamp": "2026-09-05T09:41:36.540Z",
       "previous_hash": "0000000000000000000000000000000000000000000000000000000000000000",
-      "current_hash": "4d430d87bba2b701cd65981aeb12fd1992a2b2c00505511664593ec9b7393c91"
+      "current_hash": "ac10902cbe528f11f35bba6c65bfe9be7b5b3255f9b00cea675a09c9925fe8bd"
     },
     {
       "payment_id": "pay_demo_captured_05",
@@ -19844,45 +19844,10 @@
       "tool_result": "SKIPPED",
       "amount_recovered": 0,
       "final_payment_status": "captured",
-      "event_id": "evt_1788596054971_7mg9k1k",
-      "timestamp": "2026-09-05T08:14:14.971Z",
-      "previous_hash": "4d430d87bba2b701cd65981aeb12fd1992a2b2c00505511664593ec9b7393c91",
-      "current_hash": "c72dda62d1d06cce820e5bc6219da74f3e2a8e228c270ccd64ae4434d47a7176"
-    },
-    {
-      "payment_id": "pay_demo_highvalue_03",
-      "event_type": "POLICY_EVAL",
-      "actor": "POLICY_ENGINE",
-      "agent_diagnosis": "network_timeout",
-      "recoverability_score": 0.85,
-      "confidence": 0.82,
-      "recommended_action": "RETRY_PAYMENT",
-      "policy_decision": "BLOCKED",
-      "policy_violations": [
-        "CUSTOMER_OPTED_OUT",
-        "AMOUNT_EXCEEDS_CAP"
-      ],
-      "execution_mode": "SIMULATED_RECOVERY",
-      "amount_recovered": 0,
-      "final_payment_status": "failed",
-      "event_id": "evt_1788596061115_m67mmlw",
-      "timestamp": "2026-09-05T08:14:21.115Z",
-      "previous_hash": "c72dda62d1d06cce820e5bc6219da74f3e2a8e228c270ccd64ae4434d47a7176",
-      "current_hash": "d018669fb664fa63b234f5e31901a557bc2c9e93e4c93c3faa007bc658145122"
-    },
-    {
-      "payment_id": "pay_demo_highvalue_03",
-      "event_type": "VERIFICATION",
-      "actor": "TOOL_RUNNER",
-      "policy_decision": "ALLOWED",
-      "execution_mode": "SIMULATED_RECOVERY",
-      "tool_result": "SKIPPED",
-      "amount_recovered": 0,
-      "final_payment_status": "abandoned",
-      "event_id": "evt_1788596061121_fv4tpko",
-      "timestamp": "2026-09-05T08:14:21.121Z",
-      "previous_hash": "d018669fb664fa63b234f5e31901a557bc2c9e93e4c93c3faa007bc658145122",
-      "current_hash": "5d074bfbdb0e4a6806f6caf997f6ca91496589aaddfeb6a2868516a30d3320d5"
+      "event_id": "evt_1788601296546_0gqmspy",
+      "timestamp": "2026-09-05T09:41:36.546Z",
+      "previous_hash": "ac10902cbe528f11f35bba6c65bfe9be7b5b3255f9b00cea675a09c9925fe8bd",
+      "current_hash": "8f4d67ccdb5c0bb7e71427246bfd9a1e25f7a3c49ed616ef976d566edd038998"
     }
   ],
   "stats": {
@@ -19904,6 +19869,6 @@
     "total_failure_amount": 611565400,
     "ground_truth_recoverable_count": 487,
     "ground_truth_recoverable_amount": 489287300,
-    "generated_at": "2026-09-05T08:14:14.957Z"
+    "generated_at": "2026-09-05T09:41:36.533Z"
   }
 }

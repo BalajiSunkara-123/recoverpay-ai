@@ -15,6 +15,17 @@ import {
   EvaluationComparisonResponse
 } from '../types/index.ts';
 
+export type {
+  Payment,
+  Customer,
+  PolicyRules,
+  AuditEvent,
+  AIAgentDecision,
+  PolicyResult,
+  ToolResult,
+  EvaluationComparisonResponse
+};
+
 export interface DashboardMetrics {
   total_failed_payments: number;
   recoverable_payments: number;
@@ -352,4 +363,89 @@ export async function runSafetyBlock(): Promise<SafetyBlockResponse> {
   }
   return res.json();
 }
+
+export interface RazorpayStatusResponse {
+  success: boolean;
+  configured: boolean;
+  masked_key_id: string | null;
+  runtime_mode: 'RAZORPAY_TEST' | 'DEMO';
+  label: string;
+  supported_operations: string[];
+  notice: string;
+}
+
+export interface RazorpayDemoResponse {
+  success: boolean;
+  mode: 'RAZORPAY_TEST_API';
+  label: string;
+  payment: Payment;
+  customer: Customer;
+  aiDecision: AIAgentDecision;
+  policyResult: PolicyResult;
+  toolResult: ToolResult;
+  externalReferenceId?: string;
+  paymentLinkUrl?: string;
+  zeroTrustVerification: {
+    api_success: boolean;
+    payment_recovered: boolean;
+    amount_recovered: number;
+    status: string;
+    invariant_verified: boolean;
+    explanation: string;
+  };
+  auditTrail: AuditEvent[];
+}
+
+export interface RazorpayVerifyLinkResponse {
+  success: boolean;
+  paymentLinkId: string;
+  statusOnRazorpay: string;
+  paid: boolean;
+  amount_paid?: number;
+  payment_id?: string;
+  currentPaymentStatus: string;
+  recovered: boolean;
+  message: string;
+}
+
+export async function fetchRazorpayStatus(): Promise<RazorpayStatusResponse> {
+  const res = await fetch('/api/razorpay/status');
+  if (!res.ok) {
+    throw new Error(`Failed to fetch Razorpay status: ${res.statusText}`);
+  }
+  return res.json();
+}
+
+export async function runRazorpayTestDemo(
+  paymentId?: string,
+  action?: string
+): Promise<RazorpayDemoResponse> {
+  const res = await fetch('/api/razorpay/test-demo', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ paymentId, action })
+  });
+  if (!res.ok) {
+    const errData = await res.json().catch(() => ({}));
+    throw new Error(errData.message || errData.error || `Razorpay Test execution failed: ${res.statusText}`);
+  }
+  return res.json();
+}
+
+export async function verifyRazorpayLinkStatus(
+  paymentLinkId: string,
+  paymentId: string
+): Promise<RazorpayVerifyLinkResponse> {
+  const res = await fetch('/api/razorpay/verify-link', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ paymentLinkId, paymentId })
+  });
+  if (!res.ok) {
+    const errData = await res.json().catch(() => ({}));
+    throw new Error(errData.message || errData.error || `Failed to verify Razorpay link: ${res.statusText}`);
+  }
+  return res.json();
+}
+
 

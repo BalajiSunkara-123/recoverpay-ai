@@ -16,6 +16,7 @@ import { paymentRouter } from './server/routes/paymentRoutes.ts';
 import { demoRouter } from './server/routes/demoRoutes.ts';
 import { evaluationRouter } from './server/routes/evaluationRoutes.ts';
 import { auditRouter } from './server/routes/auditRoutes.ts';
+import { razorpayRouter } from './server/routes/razorpayRoutes.ts';
 import { AIAgentDecision } from './src/types/index.ts';
 
 // Ensure supported gemini-3.8-flash model is active across server environment
@@ -163,6 +164,9 @@ async function startServer() {
 
   // Cryptographic Audit Ledger API (Phase 7)
   app.use('/api/audit', auditRouter);
+
+  // Razorpay Test Mode API (Dual-Mode Interactive Sandbox)
+  app.use('/api/razorpay', razorpayRouter);
 
   // --- VITE MIDDLEWARE SETUP ---
   if (process.env.NODE_ENV !== 'production') {

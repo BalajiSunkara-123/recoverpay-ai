@@ -33,6 +33,7 @@ import {
 } from './simulationRailTools.ts';
 import {
   createRazorpayTestPaymentLink,
+  createRazorpayTestOrder,
   getRazorpayConfig
 } from './razorpayRealTools.ts';
 import { verifyExecutionOutcome } from './verification.ts';
@@ -152,10 +153,18 @@ export async function dispatchApprovedTool(
 
     switch (targetAction) {
       case 'RETRY_PAYMENT': {
-        // Simulation rail handles card / switch re-authorization
-        const sim = simulatePaymentRetry(payment, customer, idempotencyKey);
-        result = sim.toolResult;
-        paymentUpdates = sim.updatedPayment;
+        if (useRazorpay) {
+          result = await createRazorpayTestOrder(payment, idempotencyKey);
+          paymentUpdates = {
+            recovery_attempts: payment.recovery_attempts + 1,
+            updated_at: timestamp
+          };
+        } else {
+          // Simulation rail handles card / switch re-authorization
+          const sim = simulatePaymentRetry(payment, customer, idempotencyKey);
+          result = sim.toolResult;
+          paymentUpdates = sim.updatedPayment;
+        }
         break;
       }
 
