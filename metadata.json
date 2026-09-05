@@ -1,0 +1,6 @@
+{
+  "name": "RecoverPay — AI Revenue Recovery Agent",
+  "description": "Production-inspired, policy-governed AI revenue recovery prototype for Razorpay merchants.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
