@@ -106,7 +106,8 @@ export const JudgeDemoModal: React.FC<JudgeDemoModalProps> = ({
       const status = await fetchRazorpayStatus();
       setRazorpayStatus(status);
       if (status.configured) {
-        const res = await runRazorpayTestDemo('pay_demo_transient_01', actionToRun);
+        // const res = await runRazorpayTestDemo('pay_demo_transient_01', actionToRun);
+        const res = await runRazorpayTestDemo(undefined, actionToRun);
         setRazorpayData(res);
         setRazorpayAction(actionToRun);
       }
