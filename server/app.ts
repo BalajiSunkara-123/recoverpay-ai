@@ -198,6 +198,8 @@ app.use(['/api/evaluation', '/evaluation'], evaluationRouter);
 app.use(['/api/audit', '/audit'], auditRouter);
 
 // Razorpay Test Mode API (Dual-Mode Interactive Sandbox)
-app.use(['/api/razorpay', '/razorpay'], razorpayRouter);
+// app.use(['/api/razorpay', '/razorpay'], razorpayRouter);
+app.use('/api/razorpay', razorpayRouter);
+app.use('/razorpay', razorpayRouter);
 
 export default app;

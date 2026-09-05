@@ -427,6 +427,9 @@ export async function runRazorpayTestDemo(
   });
   if (!res.ok) {
     const errData = await res.json().catch(() => ({}));
+    if (errData && errData.policyResult) {
+      return errData as RazorpayDemoResponse;
+    }
     throw new Error(errData.message || errData.error || `Razorpay Test execution failed: ${res.statusText}`);
   }
   return res.json();
